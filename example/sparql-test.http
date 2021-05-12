@@ -1,0 +1,13 @@
+POST http://localhost:9999/sparql
+Content-Type: application/sparql
+
+select ?countryCode ?description ?elev
+where {
+  ?a v:country ?countryCode ;
+     v:desc ?description ;
+     v:elev ?elev ;
+     v:city ?city .
+  filter (?city = 'Dallas')
+}
+
+###

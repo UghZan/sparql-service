@@ -1,0 +1,15 @@
+FROM maven:3.6.3-jdk-8
+
+COPY pom.xml /tmp/pom.xml
+WORKDIR /tmp
+RUN mvn install dependency:copy-dependencies
+
+
+FROM janusgraph/janusgraph
+
+COPY --from=0 /tmp/target/dependency lib/
+COPY gremlin-server.yaml /opt/janusgraph/conf/gremlin-server/gremlin-server.yaml
+
+# example:
+COPY custom-remote.yaml /opt/janusgraph/conf/custom-remote.yaml
+COPY air-routes.graphml /opt/janusgraph/sample-data/air-routes.graphml

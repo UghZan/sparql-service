@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  janusgraph:
+    build:
+      context: .
+      dockerfile: Dockerfile.janus
+    ports:
+      - 8182:8182
+    environment:
+      - GREMLIN_REMOTE_HOSTS=janusgraph
