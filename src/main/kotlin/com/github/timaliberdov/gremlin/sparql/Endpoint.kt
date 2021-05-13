@@ -90,7 +90,7 @@ class Endpoint(private val port: Int) {
 
 
         val query = try {
-            QueryFactory.create(PrefixesProxy.prependGremlinPrefixes(queryStr), Syntax.syntaxSPARQL)
+            QueryFactory.create(PrefixesProxy.prependGremlinPrefixes(newQueryStr), Syntax.syntaxSPARQL)
         } catch (e: QueryParseException) {
             return complete(StatusCodes.BAD_REQUEST, "Malformed query: ${e.localizedMessage}")
         }
@@ -107,7 +107,7 @@ class Endpoint(private val port: Int) {
         val cluster = Cluster.open("conf/remote-objects.yaml") // todo: replace hard coded value with run parameter
         val client = cluster.connect<Client>().alias("g") // todo: how to get alias from properties file?
 
-        val graphTraversal = src.sparql<Any>(queryStr)
+        val graphTraversal = src.sparql<Any>(newQueryStr)
         val resultSet = client.submit(graphTraversal)
         val bindings: List<String> = query.resultVars
 
