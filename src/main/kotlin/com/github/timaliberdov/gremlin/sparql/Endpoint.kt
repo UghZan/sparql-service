@@ -26,6 +26,8 @@ import org.apache.tinkerpop.gremlin.process.remote.traversal.AbstractRemoteTrave
 import org.apache.tinkerpop.gremlin.sparql.PrefixesProxy
 import org.apache.tinkerpop.gremlin.sparql.process.traversal.dsl.sparql.SparqlTraversalSource
 import java.time.Duration
+import java.util.*
+import kotlin.collections.HashMap
 
 class Endpoint(private val port: Int) {
     private val system = ActorSystem.create("sparql-gremlin-endpoint")
@@ -54,19 +56,39 @@ class Endpoint(private val port: Int) {
     }
 
     private val routes: Route = path("sparql") {
-        concat(
             post {
                 entity(Unmarshaller.entityToString(), this::execQuery)
-            },
-            anyOf(::get, ::post) {
-                parameter("query", this::execQuery)
             }
-        )
     }
 
-    // todo: serialize to XML/JSON/CSV/TSV based on Accept header value
-    //   (see https://github.com/itech-relab-etu/rml-behind-sparql-endpoint/blob/master/src/main/kotlin/com/github/timaliberdov/rmlmapper/endpoint/util/QueryExecutionExt.kt)
     private fun execQuery(queryStr: String): Route {
+
+        val scanner = Scanner(queryStr)
+        var newQueryStr = ""
+        var prefixes = HashMap<String, String>()
+        while(scanner.hasNext())
+        {
+            var str = scanner.nextLine()
+            if(str.startsWith("PREFIX", true))
+            {
+                val parts = str.split(" ")
+                prefixes[parts[1]] = parts[2].replace("<|>".toRegex(), "")
+            }
+            else
+            {
+                for((key, value) in prefixes)
+                    str.replace(key, value)
+
+                str = str.replace("v:http://", "v:")
+                str = str.replace("p:http://", "p:")
+                str = str.replace("e:http://", "e:")
+                val match = "(v:|p:|e:)[^\\s]+".toRegex().find(str)
+                if(match != null)
+                    str = str.substring(0, match.range.first-1) + str.substring(match.range.first, match.range.last).replace("/","_") + str.substring(match.range.last+1)
+            }
+        }
+
+
         val query = try {
             QueryFactory.create(PrefixesProxy.prependGremlinPrefixes(queryStr), Syntax.syntaxSPARQL)
         } catch (e: QueryParseException) {
