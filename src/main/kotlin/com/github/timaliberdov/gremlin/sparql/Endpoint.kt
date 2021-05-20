@@ -77,17 +77,19 @@ class Endpoint(private val port: Int) {
             else
             {
                 for((key, value) in prefixes)
-                    str.replace(key, value)
+                    str = str.replace(key, value)
 
                 str = str.replace("v:http://", "v:")
                 str = str.replace("p:http://", "p:")
                 str = str.replace("e:http://", "e:")
                 val match = "(v:|p:|e:)[^\\s]+".toRegex().find(str)
                 if(match != null)
-                    str = str.substring(0, match.range.first-1) + str.substring(match.range.first, match.range.last).replace("/","_") + str.substring(match.range.last+1)
+                    str = str.substring(0, match.range.first) + str.substring(match.range.first, match.range.last).replace("_", "__").replace("/","_") + str.substring(match.range.last)
             }
+            newQueryStr += str + "\n"
         }
 
+            //println(newQueryStr)
 
         val query = try {
             QueryFactory.create(PrefixesProxy.prependGremlinPrefixes(newQueryStr), Syntax.syntaxSPARQL)
